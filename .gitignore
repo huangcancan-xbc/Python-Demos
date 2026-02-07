@@ -1,0 +1,4 @@
+# Qt/CMake build artifacts
+.qtcreator
+CMakeLists.txt.user
+build
