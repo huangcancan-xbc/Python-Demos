@@ -7,12 +7,16 @@
 #include <QPushButton>
 #include <QTextEdit>
 #include <QProcess>
+#include <QColor>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class Widget;
 }
 QT_END_NAMESPACE
+
+
+enum class LogLevel { Info, Debug, Warn, Error, Success };
 
 class Widget : public QWidget
 {
@@ -39,7 +43,8 @@ private:
     void setUiBusy(bool busy);          // busy=true时禁用输入和按钮，防止重复提交。busy=false时恢复控件可用状态。
     QString py_venv_path() const;       // 解析python解释器路径
     QString py_scr_path() const;        // 解析python脚本代码路径
-    void append_logText(const QString log_text);    // 追加日志信息
+    void append_logText(const QString log_text, LogLevel level = LogLevel::Debug);    // 追加日志信息
+    QColor logColor(LogLevel level) const;  // 日志等级的颜色配置
 
     QProcess* pyProcess;
     QLineEdit* urlLineEdit;

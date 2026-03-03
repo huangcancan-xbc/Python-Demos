@@ -12,6 +12,13 @@ import shutil
 import sys
 from typing import Any
 
+# Windows 默认控制台编码可能是 gbk，遇到非常规字符会在 print() 时抛 UnicodeEncodeError。
+# 将错误策略改为 replace，避免“下载成功但日志输出失败”导致脚本返回非 0 退出码。
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(errors="replace")
+
 
 def log(message: str) -> None:
     """输出一行日志并立即刷新，保证 Qt 日志面板“实时可见”."""
