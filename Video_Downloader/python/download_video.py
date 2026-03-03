@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Qt 后端工作脚本：下载单个视频到指定目录。
 
 设计成命令行脚本（CLI），便于 C++/Qt 通过 QProcess 启动并读取输出。
@@ -115,7 +115,7 @@ def main() -> int:
     except ImportError:
         # 单独返回特定错误码，Qt 侧可据此给出更明确提示。
         log("错误：当前虚拟环境未安装 yt-dlp。")
-        log("错误：请在当前虚拟环境中先执行 `python -m pip install yt-dlp`。")
+        log("错误：请先运行 scripts/setup_venv.ps1。")
         return 2
 
     has_ffmpeg = shutil.which("ffmpeg") is not None

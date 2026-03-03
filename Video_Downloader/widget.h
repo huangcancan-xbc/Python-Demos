@@ -25,6 +25,12 @@ public:
 private slots:
 
     void onSubmitClicked();             // 提交/开始下载按钮的按下逻辑
+    void handleProcessStdout();         // 子进程有新的标准输出时触发（进度日志、成功提示等）
+    void handleProcessStderr();         // 子进程有新的标准错误时触发（网络错误、提取失败、参数错误等）
+    // 处理QProcess级别错误（不是Python业务错误）：解释器不存在、进程启动失败、进程崩溃、读写管道异常等
+    void handleProcessError(QProcess::ProcessError error);
+    // 子进程结束后的统一收尾逻辑：exitCode==0 视为成功；非 0 视为失败，并在 UI 中给出提示
+    void handleProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
 
 private:
     Ui::Widget* ui;

@@ -22,13 +22,39 @@ Widget::Widget(QWidget* parent)
 
     setUi();    // 创建页面
 
+    // 子进程通道模式：SeparateChannels = stdout/stderr分离，便于在ui中单独标识错误输出
+    pyProcess->setProcessChannelMode(QProcess::SeparateChannels);
+
+
     // 按钮点击 -> 提交下载流程入口。
     connect(submit_button, &QPushButton::clicked, this, &Widget::onSubmitClicked);
 
+    // 子进程标准输出：读取并追加到日志框
+    connect(pyProcess, &QProcess::readyReadStandardOutput, this, &Widget::handleProcessStdout);
+
+    // 子进程标准错误：读取并追加到日志框（含错误前缀）
+    connect(pyProcess, &QProcess::readyReadStandardError, this, &Widget::handleProcessStderr);
+
+    // 子进程Process级别的错误处理：自身错误（比如启动失败）回调
+    connect(pyProcess, &QProcess::errorOccurred, this, &Widget::handleProcessError);
+
+    // 子进程结束统一处理方式
+    connect(pyProcess, &QProcess::finished, this, &Widget::handleProcessFinished);
+
+    append_logText("[info] 应用已经启动！准备好开始下载您的视频了吗……");
+    append_logText(QString("[info] 当前视频输出目录：%1").arg(QDir::toNativeSeparators(QDir::currentPath())));
 }
 
 Widget::~Widget()
 {
+    if (pyProcess->state() != QProcess::NotRunning)
+    {
+        // terminate() 会请求子进程正常结束；
+        // waitForFinished(1500) 最多等 1.5 秒，避免界面退出时长时间阻塞。
+        pyProcess->terminate();
+        pyProcess->waitForFinished(1500);
+    }
+
     delete ui;
 }
 
@@ -66,7 +92,19 @@ void Widget::setUi()
 
 void Widget::setUiBusy(bool busy)
 {
+    // 任务运行中禁用输入，避免“连续点击”触发重复任务。
+    state_label->setEnabled(!busy);
+    state_label->setEnabled(!busy);
 
+    if(busy)
+    {
+        state_label->setText("状态：运行中");
+    }
+    else if(state_label->text() == "状态：运行中")
+    {
+        // 只有仍处于“运行中”时才回落到“空闲”，避免覆盖“成功/失败”。
+        state_label->setText("状态：空闲/可用");
+    }
 }
 
 void Widget::onSubmitClicked()
@@ -114,14 +152,15 @@ void Widget::onSubmitClicked()
     // QDir::toNativeSeparators()用于把路径中的斜杠转为当前系统原生分隔符
     // Windows 输出：C:\Videos\Downloads
     // Linux/macOS 输出：C:/Videos/Downloads
-    append_logText("------------------------------------------------------------");
-    append_logText(QString("开始时间：%1").arg(QDateTime::currentDateTime().toString(Qt::ISODate)));
-    append_logText(QString("Python 解释器：%1").arg(QDir::toNativeSeparators(pyVenvPath)));
-    append_logText(QString("Python 后端脚本：%1").arg(QDir::toNativeSeparators(pySrcPath)));
-    append_logText(QString("下载的视频链接：%1").arg(videoUrl));
-    append_logText(QString("视频输出目录：%1").arg(QDir::toNativeSeparators(outputPath)));
+    append_logText("------------------------------------------------------------------------------------------------------");
+    append_logText(QString("[debug] 开始时间：%1").arg(QDateTime::currentDateTime().toString(Qt::ISODate)));
+    append_logText(QString("[debug] Python 解释器：%1").arg(QDir::toNativeSeparators(pyVenvPath)));
+    append_logText(QString("[debug] Python 后端脚本：%1").arg(QDir::toNativeSeparators(pySrcPath)));
+    append_logText(QString("[debug] 下载的视频链接：%1").arg(videoUrl));
+    append_logText(QString("[debug] 视频输出目录：%1").arg(QDir::toNativeSeparators(outputPath)));
+    append_logText("------------------------------------------------------------------------------------------------------");
 
-    //
+    // 标记繁忙——运行中
     setUiBusy(true);
 
     // 设置子进程的工作目录
@@ -133,6 +172,82 @@ void Widget::onSubmitClicked()
     // 通过进程边界调用（不需在 C++ 链接 Python）
     // 完成后可通过 readyReadStandardOutput / finished 信号获取结果
     pyProcess->start(pyVenvPath, Compilation_options);
+}
+
+// 处理子进程的标准输出
+void Widget::handleProcessStdout()
+{
+    // fromLocal8Bit：按本地编码解码字节流，减少中文日志乱码概率
+    append_logText(QString::fromLocal8Bit(pyProcess->readAllStandardOutput()));
+}
+
+// 处理子进程的标准错误
+void Widget::handleProcessStderr()
+{
+    // stderr通常是错误/警告信息，这里统一加前缀便于肉眼筛查。
+    const QString stderrText = QString::fromLocal8Bit(pyProcess->readAllStandardError());
+    append_logText(QString("[标准错误] %1").arg(stderrText));
+}
+
+// 处理QProcess级别的错误
+void Widget::handleProcessError(QProcess::ProcessError error)
+{
+    // 把QProcess枚举转成可读文本，便于排查
+    QString errorName;
+    switch (error)
+    {
+        case QProcess::FailedToStart:
+            errorName = "启动失败";
+            break;
+        case QProcess::Crashed:
+            errorName = "进程崩溃";
+            break;
+        case QProcess::Timedout:
+            errorName = "超时";
+            break;
+        case QProcess::ReadError:
+            errorName = "读取错误";
+            break;
+        case QProcess::WriteError:
+            errorName = "写入错误";
+            break;
+        case QProcess::UnknownError:
+        default:
+            errorName = "未知错误";
+            break;
+    }
+
+    append_logText(QString("错误：QProcess 级别的错误! QProcess 错误类型：%1").arg(errorName));
+    append_logText(QString("错误详情：%1").arg(pyProcess->errorString()));
+
+    setUiBusy(false);
+    state_label->setText("状态：失败！");
+}
+
+// 统一处理进程结束后的逻辑
+void Widget::handleProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
+{
+    setUiBusy(false);       // 无论成功失败，任务都结束了，先恢复可交互状态
+
+    if (exitStatus == QProcess::CrashExit)
+    {
+        append_logText("错误：Python 子进程异常崩溃。");
+        state_label->setText("状态：失败！");
+        QMessageBox::critical(this, "下载失败", "Python 子进程异常崩溃！");
+        return;
+    }
+
+    if (exitCode == 0)
+    {
+        append_logText("成功：下载任务已完成！");
+        state_label->setText("状态：成功！");
+        QMessageBox::information(this, "完成", "视频下载完成！");
+        return;
+    }
+
+    append_logText(QString("错误：Python 子进程退出码为 %1").arg(exitCode));
+    state_label->setText("状态：失败！");
+    QMessageBox::warning(this, "下载失败", QString("Python 脚本以退出码 %1 结束。\n请查看日志定位问题。").arg(exitCode));
 }
 
 QString Widget::py_venv_path() const
