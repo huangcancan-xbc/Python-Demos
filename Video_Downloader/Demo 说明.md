@@ -1,5 +1,7 @@
 # Demo 说明
 
+>因为暂时不太会用 C++ 写下载脚本，但是反观 python 来说就容易很多，所以就让我想到了 C++ 和 python 联合编译，但是在探索的过程中发现了 QProcess，于是就有了这个 Demo，需要注意的是它并不属于 C++ 和 python 的联合编译，仅仅是父子进程关系，但依然让我学到挺多，至于 C++ 和 python 的联合编译估计就要到后面了……
+
 这是一个基于 Qt（C++）+ Python（yt-dlp）的桌面视频下载 Demo。用户在 Qt 界面输入视频链接后，Qt 通过 `QProcess` 启动 Python 脚本 `python/download_video.py` 执行下载，并将后端输出实时回显到日志面板。
 
 核心流程：
