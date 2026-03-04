@@ -41,6 +41,7 @@ private:
 
     void setUi();                       // 设置/创建页面的结构
     void setUiBusy(bool busy);          // busy=true时禁用输入和按钮，防止重复提交。busy=false时恢复控件可用状态。
+    QString py_backend_exe_path() const; // 解析打包后的后端可执行文件路径
     QString py_venv_path() const;       // 解析python解释器路径
     QString py_scr_path() const;        // 解析python脚本代码路径
     void append_logText(const QString log_text, LogLevel level = LogLevel::Debug);    // 追加日志信息

@@ -149,34 +149,55 @@ void Widget::onSubmitClicked()
         return;
     }
 
-    const QString pyVenvPath = py_venv_path();      // 解释器路径
-    const QString pySrcPath = py_scr_path();        // python脚本代码路径
-    if (pyVenvPath.isEmpty())
-    {
-        QMessageBox::critical(this, "未找到 Python 虚拟环境", "未找到 .venv 中的 Python 解释器。\n");
-        append_logText("错误：未在项目目录或上级目录找到 Python 解释器（.venv）。");
-        return;
-    }
-    if (pySrcPath.isEmpty())
-    {
-        QMessageBox::critical(this, "未找到后端脚本", "未找到 python/download_video.py。");
-        append_logText("错误：未找到后端脚本 python/download_video.py。");
-        return;
-    }
-
     // 当前输出路径
     const QString outputPath = QDir::currentPath();
-    // 用于python编译的参数选项信息，相当于gcc -o 中的 -o
-    QStringList Compilation_options;
-    Compilation_options << "-u" << pySrcPath << "--url" << videoUrl << "--output-dir" << outputPath;
+    // 优先使用发布目录中的后端可执行文件；找不到时回退到“python + 脚本”模式（便于本地开发）
+    const QString backendExePath = py_backend_exe_path();
+    const bool useBackendExe = !backendExePath.isEmpty();
+
+    QString program;                    // 最终要启动的可执行程序
+    QStringList Compilation_options;    // 子进程参数
+
+    if (useBackendExe)
+    {
+        program = backendExePath;
+        Compilation_options << "--url" << videoUrl << "--output-dir" << outputPath;
+    }
+    else
+    {
+        const QString pyVenvPath = py_venv_path();      // 解释器路径
+        const QString pySrcPath = py_scr_path();        // python脚本代码路径
+        if (pyVenvPath.isEmpty())
+        {
+            QMessageBox::critical(this, "未找到 Python 虚拟环境", "未找到 .venv 中的 Python 解释器。\n");
+            append_logText("错误：未在项目目录或上级目录找到 Python 解释器（.venv）。");
+            return;
+        }
+        if (pySrcPath.isEmpty())
+        {
+            QMessageBox::critical(this, "未找到后端脚本", "未找到 python/download_video.py。");
+            append_logText("错误：未找到后端脚本 python/download_video.py。");
+            return;
+        }
+
+        program = pyVenvPath;
+        Compilation_options << "-u" << pySrcPath << "--url" << videoUrl << "--output-dir" << outputPath;
+    }
 
     // QDir::toNativeSeparators()用于把路径中的斜杠转为当前系统原生分隔符
     // Windows 输出：C:\Videos\Downloads
     // Linux/macOS 输出：C:/Videos/Downloads
     append_logText("--------------------------------------------------------------------------------------------------------------------------------------------------------");
     append_logText(QString("[debug] 开始时间：%1").arg(QDateTime::currentDateTime().toString(Qt::ISODate)));
-    append_logText(QString("[debug] Python 解释器：%1").arg(QDir::toNativeSeparators(pyVenvPath)));
-    append_logText(QString("[debug] Python 后端脚本：%1").arg(QDir::toNativeSeparators(pySrcPath)));
+    if (useBackendExe)
+    {
+        append_logText(QString("[debug] 后端可执行程序：%1").arg(QDir::toNativeSeparators(backendExePath)));
+    }
+    else
+    {
+        append_logText(QString("[debug] Python 解释器：%1").arg(QDir::toNativeSeparators(program)));
+        append_logText(QString("[debug] Python 后端脚本：%1").arg(QDir::toNativeSeparators(py_scr_path())));
+    }
     append_logText(QString("[debug] 下载的视频链接：%1").arg(videoUrl));
     append_logText(QString("[debug] 视频输出目录：%1").arg(QDir::toNativeSeparators(outputPath)));
     append_logText("--------------------------------------------------------------------------------------------------------------------------------------------------------");
@@ -192,7 +213,29 @@ void Widget::onSubmitClicked()
     // 异步启动 Python 脚本
     // 通过进程边界调用（不需在 C++ 链接 Python）
     // 完成后可通过 readyReadStandardOutput / finished 信号获取结果
-    pyProcess->start(pyVenvPath, Compilation_options);
+    pyProcess->start(program, Compilation_options);
+}
+
+QString Widget::py_backend_exe_path() const
+{
+    // 发布包优先：Video_Downloader.exe 同级 runtime/vd_backend.exe
+    const QStringList paths = {
+        QDir(QCoreApplication::applicationDirPath()).filePath("runtime/vd_backend.exe"),
+        QDir(QCoreApplication::applicationDirPath()).filePath("vd_backend.exe"),
+        QDir::current().filePath("runtime/vd_backend.exe"),
+        QDir::current().filePath("vd_backend.exe")
+    };
+
+    for (const QString &path : paths)
+    {
+        QFileInfo info(path);
+        if (info.exists() && info.isFile())
+        {
+            return info.absoluteFilePath();
+        }
+    }
+
+    return QString();
 }
 
 // 处理子进程的标准输出
