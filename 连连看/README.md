@@ -1,4 +1,4 @@
-# 连连看游戏
+# 连连看游戏（Vibe Coding）
 
 一个使用 Python 和 Pygame 制作的经典连连看小游戏。
 
