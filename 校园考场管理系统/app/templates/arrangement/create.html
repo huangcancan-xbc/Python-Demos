@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}新建编排 - 校园考场管理系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4 class="page-title mb-0"><i class="bi bi-grid-3x3-gap"></i> 考场自动编排</h4>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-gear me-1"></i> 编排设置</div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="examSelect" class="form-label">选择考试 <span class="text-danger">*</span></label>
+                        <select class="form-select" name="exam_id" id="examSelect" required onchange="updatePreview()">
+                            <option value="">-- 请选择待编排的考试 --</option>
+                            {% for exam in pending_exams %}
+                            <option value="{{ exam.id }}"
+                                    data-count="{{ exam.student_count }}"
+                                    data-date="{{ exam.exam_date }}"
+                                    data-slot="{{ exam.time_slot_name }}">
+                                {{ exam.name }} ({{ exam.subject }}) - {{ exam.student_count }}人
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    {% if pending_exams %}
+                    <div class="alert alert-info mb-3" id="examInfo" style="display:none;">
+                        <div class="fw-semibold mb-1"><i class="bi bi-info-circle me-1"></i>考试信息预览</div>
+                        <div id="examPreview" class="small"></div>
+                    </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-warning w-100" {% if not pending_exams %}disabled{% endif %}>
+                        <i class="bi bi-lightning-charge"></i> 开始自动编排
+                    </button>
+                </form>
+
+                {% if not pending_exams %}
+                <div class="text-center text-muted mt-3">
+                    <i class="bi bi-check-circle" style="font-size:1.5rem;"></i>
+                    <p class="mt-1">所有考试已完成编排</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-door-open me-1"></i> 可用教室</span>
+                <div>
+                    <span class="badge status-badge-count">{{ rooms|length }} 间</span>
+                    <span class="badge status-badge-arranged">
+                        总有效容量: {{ rooms|map(attribute='effective_capacity')|sum }} 座
+                    </span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>教室</th>
+                                <th>位置</th>
+                                <th>总容量</th>
+                                <th>有效容量</th>
+                                <th>布局</th>
+                                <th>设备</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for room in rooms %}
+                            <tr>
+                                <td><strong>{{ room.name }}</strong></td>
+                                <td class="text-muted">{{ room.location }}</td>
+                                <td>{{ room.capacity }}</td>
+                                <td><strong class="text-success">{{ room.effective_capacity }}</strong></td>
+                                <td class="text-muted">{{ room.rows }}×{{ room.cols }}</td>
+                                <td><small>{{ room.equipment or '-' }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="bi bi-lightbulb me-1"></i> 编排算法说明</div>
+            <div class="card-body">
+                <h6 class="fw-semibold">核心约束</h6>
+                <ol class="small mb-3">
+                    <li><strong>教室互斥:</strong> 同日期同时段的不同考试不会分配到同一教室</li>
+                    <li><strong>隔位就坐:</strong> 座位矩阵中 (行号+列号) 为偶数的位置可坐学生</li>
+                    <li><strong>贪心策略:</strong> 优先使用大容量教室匹配考生多的考试</li>
+                </ol>
+                <h6 class="fw-semibold">输出结果</h6>
+                <ul class="small mb-0">
+                    <li>考场-科目映射表</li>
+                    <li>每场座位布局图 (可视化)</li>
+                    <li>监考教师自动分配</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updatePreview() {
+    var sel = document.getElementById('examSelect');
+    var info = document.getElementById('examInfo');
+    var preview = document.getElementById('examPreview');
+    if (sel.value) {
+        var opt = sel.options[sel.selectedIndex];
+        preview.innerHTML = '考生人数: <strong>' + opt.dataset.count + '</strong> 人<br>' +
+                           '考试日期: ' + opt.dataset.date + '<br>' +
+                           '时间段: ' + opt.dataset.slot;
+        info.style.display = '';
+    } else {
+        info.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

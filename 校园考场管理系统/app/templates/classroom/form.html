@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ '编辑教室' if room else '添加教室' }} - 校园考场管理系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-{{ 'pencil' if room else 'plus-circle' }} text-primary"></i>
+                    {{ '编辑教室' if room else '添加教室' }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">教室名称 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name"
+                                   value="{{ room.name if room else '' }}" required
+                                   placeholder="例: 第一教学楼101">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="building" class="form-label">教学楼 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="building" name="building"
+                                   value="{{ room.building if room else '' }}" required
+                                   placeholder="例: 第一教学楼">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="room_number" class="form-label">房间号 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="room_number" name="room_number"
+                                   value="{{ room.room_number if room else '' }}" required
+                                   placeholder="例: 101">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="capacity" class="form-label">总座位数 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="capacity" name="capacity"
+                                   value="{{ room.capacity if room else '' }}" required min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="rows" class="form-label">座位行数 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="rows" name="rows"
+                                   value="{{ room.rows if room else 6 }}" required min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="cols" class="form-label">座位列数 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="cols" name="cols"
+                                   value="{{ room.cols if room else 10 }}" required min="1">
+                        </div>
+                        <div class="col-md-8">
+                            <label for="equipment" class="form-label">设备信息</label>
+                            <input type="text" class="form-control" id="equipment" name="equipment"
+                                   value="{{ room.equipment if room else '' }}"
+                                   placeholder="例: 多媒体, 空调, 投影仪">
+                        </div>
+                        {% if room %}
+                        <div class="col-md-4">
+                            <label for="status" class="form-label">状态</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="available" {% if room.status == 'available' %}selected{% endif %}>可用</option>
+                                <option value="maintenance" {% if room.status == 'maintenance' %}selected{% endif %}>维护中</option>
+                            </select>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> {{ '保存修改' if room else '提交' }}
+                        </button>
+                        <a href="{{ url_for('classroom.list_classrooms') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> 返回
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

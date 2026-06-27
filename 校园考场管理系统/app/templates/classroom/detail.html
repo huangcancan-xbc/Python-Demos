@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{{ room.name }} - 座位图{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4 class="page-title"><i class="bi bi-grid-3x3"></i> {{ room.name }} · 座位布局</h4>
+    <a href="{{ url_for('classroom.list_classrooms') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> 返回列表
+    </a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-grid-3x3 me-1"></i> 座位图
+                <span class="text-muted" style="font-size:0.8rem;">({{ room.rows }} 行 × {{ room.cols }} 列)</span>
+            </div>
+            <div class="card-body text-center">
+                <!-- 讲台 -->
+                <div class="mb-3">
+                    <div class="podium">
+                        <i class="bi bi-easel"></i> 讲台
+                    </div>
+                </div>
+
+                <!-- 座位矩阵 -->
+                <div class="seat-map-scroll mb-3">
+                    <div class="seat-map">
+                        {% for row in seat_matrix %}
+                        <div class="d-flex justify-content-center mb-1">
+                            {% for seat in row %}
+                            <div class="seat mx-1 {% if seat == 1 %}seat-available{% else %}seat-empty{% endif %}">
+                                {% if seat == 1 %}<i class="bi bi-check-lg" style="font-size:11px;"></i>{% else %}·{% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- 图例 -->
+                <div class="legend">
+                    <span class="legend-item">
+                        <span class="legend-dot seat-available"></span> 可坐
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-dot seat-empty"></span> 隔位留空
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-info-circle me-1"></i> 教室信息</div>
+            <div class="card-body p-0">
+                <table class="table mb-0">
+                    <tbody>
+                        <tr><th style="width:100px;">名称</th><td>{{ room.name }}</td></tr>
+                        <tr><th>位置</th><td>{{ room.location }}</td></tr>
+                        <tr><th>总容量</th><td>{{ room.capacity }} 座</td></tr>
+                        <tr>
+                            <th>有效容量</th>
+                            <td><span class="badge status-badge-arranged">{{ room.effective_capacity }} 座</span></td>
+                        </tr>
+                        <tr><th>布局</th><td>{{ room.rows }} 行 × {{ room.cols }} 列</td></tr>
+                        <tr><th>设备</th><td>{{ room.equipment or '无' }}</td></tr>
+                        <tr><th>状态</th><td>{{ room.status_name }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><i class="bi bi-lightbulb me-1"></i> 隔位就坐说明</div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">
+                    座位坐标 <code>(行+列)</code> 为偶数的位置可坐学生，
+                    相邻座位自动留空。
+                </p>
+                <p class="small text-muted mb-0">
+                    有效容量 ≈ 总容量的一半，确保考生间保持安全距离。
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

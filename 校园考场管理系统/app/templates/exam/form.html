@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ '编辑考试' if exam else '新建考试' }} - 校园考场管理系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-{{ 'pencil' if exam else 'plus-circle' }} text-primary"></i>
+                    {{ '编辑考试' if exam else '新建考试' }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label for="name" class="form-label">考试名称 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name"
+                                   value="{{ exam.name if exam else '' }}" required
+                                   placeholder="例: 2026年春季《软件工程》期末考试">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="subject" class="form-label">科目 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="subject" name="subject"
+                                   value="{{ exam.subject if exam else '' }}" required
+                                   placeholder="例: 软件工程">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="exam_date" class="form-label">考试日期 <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="exam_date" name="exam_date"
+                                   value="{{ exam.exam_date if exam else '' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="time_slot" class="form-label">时间段 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="time_slot" name="time_slot" required>
+                                <option value="">-- 选择时间段 --</option>
+                                {% for key, slot in time_slots.items() %}
+                                <option value="{{ key }}"
+                                    {% if exam and exam.time_slot == key %}selected{% endif %}>
+                                    {{ slot.name }} ({{ slot.start }}-{{ slot.end }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="student_count" class="form-label">考生人数 <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="student_count" name="student_count"
+                                   value="{{ exam.student_count if exam else '' }}" required min="1"
+                                   placeholder="参加考试的学生总数">
+                        </div>
+                        <div class="col-12">
+                            <label for="description" class="form-label">考试说明</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"
+                                      placeholder="可选，填写考试注意事项等">{{ exam.description if exam else '' }}</textarea>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> {{ '保存修改' if exam else '提交' }}
+                        </button>
+                        <a href="{{ url_for('exam.list_exams') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> 返回
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

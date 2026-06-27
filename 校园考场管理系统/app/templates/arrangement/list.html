@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}考场编排 - 校园考场管理系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4 class="page-title"><i class="bi bi-grid-3x3-gap"></i> 考场编排</h4>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('arrangement.create_arrangement') }}" class="btn btn-warning">
+            <i class="bi bi-plus-circle"></i> 新建编排
+        </a>
+        {% if current_user.role == 'admin' %}
+        <form method="POST" action="{{ url_for('arrangement.batch_arrange') }}" class="d-inline"
+              onsubmit="return confirm('确认一键编排所有待编排考试？')">
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-lightning-charge"></i> 一键批量编排
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+{% if summaries %}
+{% for s in summaries %}
+<div class="card mb-4 arrangement-card">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <strong>{{ s.exam.name }}</strong>
+            <span class="badge status-badge-info">{{ s.exam.subject }}</span>
+            <span class="text-muted" style="font-size:0.85rem;">
+                <i class="bi bi-calendar3"></i> {{ s.exam.exam_date }}
+                <i class="bi bi-clock ms-2"></i> {{ s.exam.time_slot_name }}
+            </span>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge status-badge-count">{{ s.room_count }} 个考场</span>
+            <span class="badge status-badge-arranged">{{ s.total_arranged }} / {{ s.exam.student_count }} 人</span>
+            {% if current_user.role == 'admin' %}
+            <form method="POST" action="{{ url_for('arrangement.assign_invigilator', exam_id=s.exam.id) }}" class="d-inline"
+                  onsubmit="return confirm('确认自动分配监考教师？')">
+                <button type="submit" class="btn btn-sm btn-outline-info">
+                    <i class="bi bi-people"></i> 分配监考
+                </button>
+            </form>
+            <form method="POST" action="{{ url_for('arrangement.delete_arrangement', exam_id=s.exam.id) }}" class="d-inline"
+                  onsubmit="return confirm('确认删除该编排？')">
+                <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="删除编排">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>考场</th>
+                        <th>位置</th>
+                        <th>容量</th>
+                        <th>分配人数</th>
+                        <th>监考教师</th>
+                        <th style="width:80px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in s.rooms %}
+                    <tr>
+                        <td><strong>{{ r.classroom.name }}</strong></td>
+                        <td class="text-muted">{{ r.classroom.location }}</td>
+                        <td>{{ r.classroom.effective_capacity }} 座</td>
+                        <td><strong class="text-primary">{{ r.student_count }}</strong> 人</td>
+                        <td>
+                            {% if r.invigilators %}
+                                {% for inv in r.invigilators %}
+                                <span class="badge status-badge-muted">{{ inv }}</span>
+                                {% endfor %}
+                            {% else %}
+                            <span class="text-muted">未分配</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('arrangement.detail_arrangement', exam_id=s.exam.id) }}"
+                               class="btn btn-sm btn-outline-primary" title="查看座位图">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="bi bi-grid-3x3-gap"></i>
+        <p>暂无编排记录，请先创建考试并进行编排</p>
+        <a href="{{ url_for('arrangement.create_arrangement') }}" class="btn btn-warning">
+            <i class="bi bi-plus-circle"></i> 新建编排
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

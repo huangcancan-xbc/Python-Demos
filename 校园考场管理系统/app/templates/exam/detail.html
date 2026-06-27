@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}考试详情 - {{ exam.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4 class="page-title"><i class="bi bi-journal-text"></i> 考试详情</h4>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if current_user.role in ['admin', 'teacher'] %}
+        <a href="{{ url_for('exam.edit_exam', id=exam.id) }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-pencil"></i> 编辑
+        </a>
+        {% endif %}
+        <a href="{{ url_for('exam.list_exams') }}" class="btn btn-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> 返回
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body p-0">
+                <table class="table mb-0">
+                    <tbody>
+                        <tr><th style="width:120px;">考试名称</th><td>{{ exam.name }}</td></tr>
+                        <tr><th>科目</th><td><span class="badge status-badge-info">{{ exam.subject }}</span></td></tr>
+                        <tr><th>考试日期</th><td>{{ exam.exam_date }}</td></tr>
+                        <tr><th>时间段</th><td>{{ exam.time_slot_name }} ({{ exam.time_info }})</td></tr>
+                        <tr><th>考生人数</th><td><strong>{{ exam.student_count }}</strong> 人</td></tr>
+                        <tr>
+                            <th>状态</th>
+                            <td>
+                                {% if exam.status == 'pending' %}
+                                <span class="badge status-badge-pending">{{ exam.status_name }}</span>
+                                {% elif exam.status == 'arranged' %}
+                                <span class="badge status-badge-arranged">{{ exam.status_name }}</span>
+                                {% else %}
+                                <span class="badge status-badge-ongoing">{{ exam.status_name }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr><th>说明</th><td>{{ exam.description or '无' }}</td></tr>
+                        <tr><th>创建者</th><td>{{ exam.creator.real_name if exam.creator else '-' }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        {% if exam.status == 'arranged' %}
+        <div class="card">
+            <div class="card-header"><i class="bi bi-grid-3x3-gap me-1"></i> 编排信息</div>
+            <div class="card-body">
+                <p>已分配考场: <strong>{{ exam.arrangements.count() }}</strong> 间</p>
+                <p>已分配座位: <strong>{{ exam.arranged_count }}</strong> / {{ exam.student_count }}</p>
+                <a href="{{ url_for('arrangement.detail_arrangement', exam_id=exam.id) }}" class="btn btn-primary w-100">
+                    <i class="bi bi-grid-3x3-gap"></i> 查看编排详情
+                </a>
+            </div>
+        </div>
+        {% elif exam.status == 'pending' %}
+        <div class="card">
+            <div class="card-header"><i class="bi bi-lightning-charge me-1"></i> 操作</div>
+            <div class="card-body">
+                <a href="{{ url_for('arrangement.create_arrangement') }}" class="btn btn-warning w-100">
+                    <i class="bi bi-grid-3x3-gap"></i> 前往编排
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

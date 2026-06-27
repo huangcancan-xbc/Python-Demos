@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}控制台 - 校园考场管理系统{% endblock %}
+
+{% block content %}
+<h4 class="page-title mb-4"><i class="bi bi-grid-1x2"></i> 控制台</h4>
+
+<!-- 统计卡片 -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card indigo">
+            <div class="stat-icon"><i class="bi bi-journal-text"></i></div>
+            <div class="stat-number">{{ stats.exam_count }}</div>
+            <div class="stat-label">考试总数</div>
+            <div class="stat-sub" style="color:var(--warning);"><i class="bi bi-clock"></i> 待编排 {{ stats.pending_count }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card emerald">
+            <div class="stat-icon"><i class="bi bi-door-open"></i></div>
+            <div class="stat-number">{{ stats.classroom_count }}</div>
+            <div class="stat-label">可用教室</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card sky">
+            <div class="stat-icon"><i class="bi bi-people"></i></div>
+            <div class="stat-number">{{ stats.teacher_count }}</div>
+            <div class="stat-label">监考教师</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card amber">
+            <div class="stat-icon"><i class="bi bi-grid-3x3-gap"></i></div>
+            <div class="stat-number">{{ stats.arrangement_count }}</div>
+            <div class="stat-label">已编考场</div>
+        </div>
+    </div>
+</div>
+
+<!-- 快捷操作 + 系统说明 -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-lightning-charge me-1"></i> 快捷操作</div>
+            <div class="card-body d-flex flex-wrap gap-2 align-content-start">
+                <a href="{{ url_for('exam.add_exam') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> 新建考试
+                </a>
+                <a href="{{ url_for('classroom.add_classroom') }}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> 添加教室
+                </a>
+                <a href="{{ url_for('arrangement.create_arrangement') }}" class="btn btn-warning">
+                    <i class="bi bi-grid-3x3-gap"></i> 考场编排
+                </a>
+                <form method="POST" action="{{ url_for('arrangement.batch_arrange') }}" class="d-inline"
+                      onsubmit="return confirm('确认一键编排所有待编排考试？')">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-lightning-charge"></i> 一键批量编排
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-shield-check me-1"></i> 系统特性</div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
+                    <li class="d-flex align-items-start gap-2">
+                        <i class="bi bi-check-circle-fill mt-1" style="color:var(--success);"></i>
+                        <span style="color:var(--stone-600);">同时段不同科目<strong>不会</strong>分配到同一教室</span>
+                    </li>
+                    <li class="d-flex align-items-start gap-2">
+                        <i class="bi bi-check-circle-fill mt-1" style="color:var(--success);"></i>
+                        <span style="color:var(--stone-600);">座位采用<strong>隔位就坐</strong>策略，保持安全距离</span>
+                    </li>
+                    <li class="d-flex align-items-start gap-2">
+                        <i class="bi bi-check-circle-fill mt-1" style="color:var(--success);"></i>
+                        <span style="color:var(--stone-600);">监考教师<strong>自动均衡</strong>分配，避免时间冲突</span>
+                    </li>
+                    <li class="d-flex align-items-start gap-2">
+                        <i class="bi bi-check-circle-fill mt-1" style="color:var(--success);"></i>
+                        <span style="color:var(--stone-600);">每场考试支持<strong>可视化座位布局图</strong></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最近考试 -->
+<div class="card">
+    <div class="card-header"><i class="bi bi-clock-history me-1"></i> 最近考试</div>
+    <div class="card-body">
+        {% if recent_exams %}
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>考试名称</th>
+                        <th>科目</th>
+                        <th>日期</th>
+                        <th>时间段</th>
+                        <th>考生</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exam in recent_exams %}
+                    <tr>
+                        <td><strong style="color:var(--stone-800);">{{ exam.name }}</strong></td>
+                        <td><span class="badge" style="background:var(--info-bg); color:var(--info);">{{ exam.subject }}</span></td>
+                        <td>{{ exam.exam_date }}</td>
+                        <td>
+                            <span>{{ exam.time_slot_name }}</span><br>
+                            <small style="color:var(--stone-400);">{{ exam.time_info }}</small>
+                        </td>
+                        <td><strong>{{ exam.student_count }}</strong> 人</td>
+                        <td>
+                            {% if exam.status == 'pending' %}
+                            <span class="badge" style="background:var(--stone-100); color:var(--stone-500);">{{ exam.status_name }}</span>
+                            {% elif exam.status == 'arranged' %}
+                            <span class="badge" style="background:var(--success-bg); color:var(--success);">{{ exam.status_name }}</span>
+                            {% elif exam.status == 'ongoing' %}
+                            <span class="badge" style="background:var(--indigo-100); color:var(--indigo-600);">{{ exam.status_name }}</span>
+                            {% else %}
+                            <span class="badge" style="background:var(--stone-200); color:var(--stone-600);">{{ exam.status_name }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if exam.status == 'arranged' %}
+                            <a href="{{ url_for('arrangement.detail_arrangement', exam_id=exam.id) }}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> 查看编排
+                            </a>
+                            {% else %}
+                            <span style="color:var(--stone-300);">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>暂无考试记录</p>
+            <a href="{{ url_for('exam.add_exam') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> 创建第一场考试
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

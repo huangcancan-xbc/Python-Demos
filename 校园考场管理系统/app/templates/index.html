@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}校园考场管理系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 72vh;">
+    <div class="col-lg-8 col-xl-7">
+        <div class="card border-0" style="box-shadow: var(--shadow-lg);">
+            <div class="card-body p-5 text-center">
+                <div class="mb-4">
+                    <div style="width:64px; height:64px; background:var(--indigo-600); border-radius:16px; display:inline-flex; align-items:center; justify-content:center;">
+                        <i class="bi bi-mortarboard-fill text-white" style="font-size:1.8rem;"></i>
+                    </div>
+                </div>
+
+                <h1 style="font-size:1.6rem; font-weight:800; color:var(--stone-900); letter-spacing:-0.02em;" class="mb-2">校园考场管理系统</h1>
+                <p style="color:var(--stone-400); font-size:0.92rem; max-width:460px;" class="mb-4 mx-auto">
+                    解决高校排考依赖人工 Excel、效率低易出错、教室冲突频发、座位资源浪费等问题
+                </p>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3" style="background:var(--indigo-50);">
+                            <i class="bi bi-grid-3x3-gap" style="font-size:1.4rem; color:var(--indigo-500);"></i>
+                            <h6 class="mt-2 mb-1 fw-bold" style="font-size:0.85rem; color:var(--stone-700);">考场自动编排</h6>
+                            <small style="color:var(--stone-400); font-size:0.78rem;">智能分配教室 · 隔位就坐</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3" style="background:var(--success-bg);">
+                            <i class="bi bi-people" style="font-size:1.4rem; color:var(--success);"></i>
+                            <h6 class="mt-2 mb-1 fw-bold" style="font-size:0.85rem; color:var(--stone-700);">监考自动分配</h6>
+                            <small style="color:var(--stone-400); font-size:0.78rem;">负载均衡 · 避免冲突</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3" style="background:var(--warning-bg);">
+                            <i class="bi bi-map" style="font-size:1.4rem; color:var(--warning);"></i>
+                            <h6 class="mt-2 mb-1 fw-bold" style="font-size:0.85rem; color:var(--stone-700);">座位布局可视化</h6>
+                            <small style="color:var(--stone-400); font-size:0.78rem;">直观座位图 · 一目了然</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-5">
+                        <i class="bi bi-box-arrow-in-right"></i> 登录系统
+                    </a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-secondary btn-lg px-4">
+                        <i class="bi bi-person-plus"></i> 注册
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

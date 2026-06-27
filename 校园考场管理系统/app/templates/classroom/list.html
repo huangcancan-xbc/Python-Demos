@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}教室管理 - 校园考场管理系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4 class="page-title"><i class="bi bi-door-open"></i> 教室管理</h4>
+    {% if current_user.role == 'admin' %}
+    <a href="{{ url_for('classroom.add_classroom') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 添加教室
+    </a>
+    {% endif %}
+</div>
+
+<!-- 搜索栏 -->
+<div class="search-bar mb-3">
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col">
+            <input type="text" name="keyword" class="form-control form-control-sm"
+                   placeholder="搜索教室名称或教学楼…" value="{{ request.args.get('keyword', '') }}"
+                   aria-label="搜索教室">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-search"></i> 搜索
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if classrooms %}
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:40px;">#</th>
+                        <th>教室名称</th>
+                        <th>位置</th>
+                        <th>容量</th>
+                        <th>有效容量</th>
+                        <th>座位布局</th>
+                        <th>设备</th>
+                        <th>状态</th>
+                        <th style="width:120px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for room in classrooms %}
+                    <tr>
+                        <td class="text-muted">{{ room.id }}</td>
+                        <td><strong>{{ room.name }}</strong></td>
+                        <td>{{ room.location }}</td>
+                        <td>{{ room.capacity }} 座</td>
+                        <td><span class="badge status-badge-arranged">{{ room.effective_capacity }} 座</span></td>
+                        <td><span class="text-muted">{{ room.rows }}×{{ room.cols }}</span></td>
+                        <td><small>{{ room.equipment or '-' }}</small></td>
+                        <td>
+                            {% if room.status == 'available' %}
+                            <span class="badge status-badge-arranged">{{ room.status_name }}</span>
+                            {% else %}
+                            <span class="badge status-badge-info">{{ room.status_name }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('classroom.detail_classroom', id=room.id) }}"
+                                   class="btn btn-outline-info" title="查看座位图" aria-label="查看 {{ room.name }} 座位图">
+                                    <i class="bi bi-grid-3x3"></i>
+                                </a>
+                                {% if current_user.role == 'admin' %}
+                                <a href="{{ url_for('classroom.edit_classroom', id=room.id) }}"
+                                   class="btn btn-outline-primary" title="编辑教室" aria-label="编辑 {{ room.name }}">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('classroom.delete_classroom', id=room.id) }}" class="d-inline"
+                                      onsubmit="return confirm('确认删除教室「{{ room.name }}」？')">
+                                    <button type="submit" class="btn btn-outline-danger" title="删除教室"
+                                            aria-label="删除 {{ room.name }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if pagination.pages > 1 %}
+        <div class="p-3 border-top">
+            <nav aria-label="教室列表分页">
+                <ul class="pagination justify-content-center mb-0">
+                    {% for p in pagination.iter_pages() %}
+                    {% if p %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('classroom.list_classrooms', page=p) }}">{{ p }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-door-closed"></i>
+            <p>暂无教室信息</p>
+            {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('classroom.add_classroom') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> 添加第一间教室
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

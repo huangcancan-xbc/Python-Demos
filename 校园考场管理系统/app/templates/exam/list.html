@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}考试管理 - 校园考场管理系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4 class="page-title"><i class="bi bi-journal-text"></i> 考试管理</h4>
+    {% if current_user.role in ['admin', 'teacher'] %}
+    <a href="{{ url_for('exam.add_exam') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 新建考试
+    </a>
+    {% endif %}
+</div>
+
+<!-- 搜索栏 -->
+<div class="search-bar mb-3">
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col-auto">
+            <select name="status" class="form-select form-select-sm" aria-label="按状态筛选">
+                <option value="">全部状态</option>
+                <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>待编排</option>
+                <option value="arranged" {% if request.args.get('status') == 'arranged' %}selected{% endif %}>已编排</option>
+                <option value="ongoing" {% if request.args.get('status') == 'ongoing' %}selected{% endif %}>进行中</option>
+                <option value="finished" {% if request.args.get('status') == 'finished' %}selected{% endif %}>已结束</option>
+            </select>
+        </div>
+        <div class="col">
+            <input type="text" name="keyword" class="form-control form-control-sm"
+                   placeholder="搜索考试名称或科目…" value="{{ request.args.get('keyword', '') }}"
+                   aria-label="搜索考试">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-search"></i> 搜索
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- 考试列表 -->
+<div class="card">
+    <div class="card-body p-0">
+        {% if exams %}
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:40px;">#</th>
+                        <th>考试名称</th>
+                        <th>科目</th>
+                        <th>考试日期</th>
+                        <th>时间段</th>
+                        <th>考生人数</th>
+                        <th>状态</th>
+                        <th style="width:120px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exam in exams %}
+                    <tr>
+                        <td class="text-muted">{{ exam.id }}</td>
+                        <td><strong>{{ exam.name }}</strong></td>
+                        <td><span class="badge status-badge-info">{{ exam.subject }}</span></td>
+                        <td>{{ exam.exam_date }}</td>
+                        <td>
+                            <span>{{ exam.time_slot_name }}</span><br>
+                            <small class="text-muted">{{ exam.time_info }}</small>
+                        </td>
+                        <td><strong>{{ exam.student_count }}</strong> 人</td>
+                        <td>
+                            {% if exam.status == 'pending' %}
+                            <span class="badge status-badge-pending">{{ exam.status_name }}</span>
+                            {% elif exam.status == 'arranged' %}
+                            <span class="badge status-badge-arranged">{{ exam.status_name }}</span>
+                            {% elif exam.status == 'ongoing' %}
+                            <span class="badge status-badge-ongoing">{{ exam.status_name }}</span>
+                            {% else %}
+                            <span class="badge status-badge-finished">{{ exam.status_name }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('exam.edit_exam', id=exam.id) }}"
+                                   class="btn btn-outline-primary" title="编辑考试" aria-label="编辑 {{ exam.name }}">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if exam.status == 'arranged' %}
+                                <a href="{{ url_for('arrangement.detail_arrangement', exam_id=exam.id) }}"
+                                   class="btn btn-outline-success" title="查看编排" aria-label="查看 {{ exam.name }} 编排">
+                                    <i class="bi bi-grid-3x3-gap"></i>
+                                </a>
+                                {% endif %}
+                                {% if current_user.role == 'admin' %}
+                                <form method="POST" action="{{ url_for('exam.delete_exam', id=exam.id) }}" class="d-inline"
+                                      onsubmit="return confirm('确认删除考试「{{ exam.name }}」？此操作不可撤销。')">
+                                    <button type="submit" class="btn btn-outline-danger" title="删除考试"
+                                            aria-label="删除 {{ exam.name }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 分页 -->
+        {% if pagination.pages > 1 %}
+        <div class="p-3 border-top">
+            <nav aria-label="考试列表分页">
+                <ul class="pagination justify-content-center mb-0">
+                    {% for p in pagination.iter_pages() %}
+                    {% if p %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('exam.list_exams', page=p, status=request.args.get('status',''), keyword=request.args.get('keyword','')) }}">{{ p }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-journal-x"></i>
+            <p>暂无考试记录</p>
+            {% if current_user.role in ['admin', 'teacher'] %}
+            <a href="{{ url_for('exam.add_exam') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> 创建第一场考试
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

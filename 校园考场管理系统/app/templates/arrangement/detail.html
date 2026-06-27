@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}编排详情 - {{ summary.exam.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4 class="page-title"><i class="bi bi-grid-3x3-gap"></i> {{ summary.exam.name }}</h4>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if current_user.role == 'admin' %}
+        <form method="POST" action="{{ url_for('arrangement.assign_invigilator', exam_id=summary.exam.id) }}" class="d-inline"
+              onsubmit="return confirm('确认自动分配监考教师？')">
+            <button type="submit" class="btn btn-outline-info">
+                <i class="bi bi-people"></i> 分配监考
+            </button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('arrangement.list_arrangements') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> 返回
+        </a>
+    </div>
+</div>
+
+<!-- 考试信息 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-center">
+            <div class="col-lg-4">
+                <div style="color:var(--stone-400); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; font-weight:600; margin-bottom:2px;">考试名称</div>
+                <div style="font-weight:700; color:var(--stone-800);">{{ summary.exam.name }}</div>
+            </div>
+            <div class="col-lg-2">
+                <div style="color:var(--stone-400); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; font-weight:600; margin-bottom:2px;">科目</div>
+                <span class="badge" style="background:var(--info-bg); color:var(--info);">{{ summary.exam.subject }}</span>
+            </div>
+            <div class="col-lg-3">
+                <div style="color:var(--stone-400); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; font-weight:600; margin-bottom:2px;">考试时间</div>
+                <div style="font-weight:600; color:var(--stone-700);">{{ summary.exam.exam_date }} {{ summary.exam.time_slot_name }}</div>
+            </div>
+            <div class="col-lg-3">
+                <div style="color:var(--stone-400); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; font-weight:600; margin-bottom:2px;">考生 / 考场</div>
+                <div style="font-weight:700; color:var(--stone-800);">{{ summary.exam.student_count }} 人 · {{ summary.room_count }} 间</div>
+            </div>
+        </div>
+        <div class="mt-3">
+            {% set pct = (summary.total_arranged / summary.exam.student_count * 100) if summary.exam.student_count > 0 else 0 %}
+            <div class="progress-summary d-flex justify-content-between small mb-2">
+                <span>座位分配</span>
+                <span>已分配 {{ summary.total_arranged }} / {{ summary.exam.student_count }} 人（{{ pct|int }}%）</span>
+            </div>
+            <div class="progress" aria-label="座位分配进度">
+                <div class="progress-bar" style="width: {{ pct }}%; background:var(--indigo-500);"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 每个考场 -->
+{% for room_info in summary.rooms %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-door-open" style="color:var(--indigo-500);"></i>
+            <strong style="color:var(--stone-800);">{{ room_info.classroom.name }}</strong>
+            <span style="color:var(--stone-400); font-size:0.82rem;">{{ room_info.classroom.location }}</span>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge" style="background:var(--success-bg); color:var(--success);">
+                <i class="bi bi-people me-1"></i>{{ room_info.student_count }} 人
+            </span>
+            {% for inv in room_info.invigilators %}
+            <span class="badge" style="background:var(--stone-100); color:var(--stone-600);">
+                <i class="bi bi-person me-1"></i>{{ inv }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card-body text-center">
+        <div class="mb-3">
+            <div class="podium"><i class="bi bi-easel"></i> 讲台</div>
+        </div>
+
+        <div class="seat-map-scroll mb-3">
+            <div class="seat-map">
+                {% for row in room_info.seat_map %}
+                <div class="d-flex justify-content-center mb-1">
+                    {% for seat in row %}
+                    <div class="seat mx-1 {% if seat == 1 %}seat-occupied{% elif seat == 0 %}seat-available{% else %}seat-empty{% endif %}"
+                         title="{% if seat == 1 %}已分配{% elif seat == 0 %}空闲座位{% else %}隔位留空{% endif %}">
+                        {% if seat == 1 %}<i class="bi bi-person-fill" style="font-size:9px;"></i>
+                        {% elif seat == 0 %}<i class="bi bi-circle" style="font-size:7px;"></i>
+                        {% else %}·{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="legend">
+            <span class="legend-item"><span class="legend-dot seat-occupied"></span> 已分配</span>
+            <span class="legend-item"><span class="legend-dot seat-available"></span> 空闲座位</span>
+            <span class="legend-item"><span class="legend-dot seat-empty"></span> 隔位留空</span>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

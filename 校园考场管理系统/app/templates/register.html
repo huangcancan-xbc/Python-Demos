@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}注册 - 校园考场管理系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center" style="margin-top: 4vh;">
+    <div class="col-sm-10 col-md-7 col-lg-5">
+        <div class="card border-0 shadow-lg">
+            <div class="card-body p-4 p-sm-5">
+                <div class="text-center mb-4">
+                    <div class="auth-icon">
+                        <i class="bi bi-person-plus" style="font-size:1.4rem;"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark mb-1">用户注册</h4>
+                    <small class="text-muted">创建您的账号</small>
+                </div>
+
+                <form method="POST">
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-6">
+                            <label for="username" class="form-label">用户名 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label for="real_name" class="form-label">真实姓名 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="real_name" name="real_name" required>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label for="password" class="form-label">密码 <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password" name="password" required autocomplete="new-password">
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label for="role" class="form-label">角色 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="role" name="role" onchange="toggleFields()">
+                                <option value="student">学生</option>
+                                <option value="teacher">教师</option>
+                                <option value="admin">管理员</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6" id="studentIdField">
+                            <label for="student_id" class="form-label">学号</label>
+                            <input type="text" class="form-control" id="student_id" name="student_id">
+                        </div>
+                        <div class="col-12 col-sm-6" id="employeeIdField" style="display:none;">
+                            <label for="employee_id" class="form-label">工号</label>
+                            <input type="text" class="form-control" id="employee_id" name="employee_id">
+                        </div>
+                        <div class="col-12">
+                            <label for="department" class="form-label">院系</label>
+                            <input type="text" class="form-control" id="department" name="department">
+                        </div>
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> 注 册
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-3">
+                    <span class="text-muted" style="font-size:0.9rem;">已有账号？</span>
+                    <a href="{{ url_for('auth.login') }}" class="text-decoration-none fw-medium">去登录</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFields() {
+    var role = document.getElementById('role').value;
+    document.getElementById('studentIdField').style.display = (role === 'student') ? '' : 'none';
+    document.getElementById('employeeIdField').style.display = (role !== 'student') ? '' : 'none';
+}
+</script>
+{% endblock %}
