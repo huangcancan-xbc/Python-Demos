@@ -1,4 +1,4 @@
-# BongoCat（Python 版）
+# BongoCat（Vibe Coding）
 
 一个使用 Python 和 Pygame 制作的 BongoCat 桌面宠物，支持多种乐器演奏。
 
